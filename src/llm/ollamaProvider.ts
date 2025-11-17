@@ -1,5 +1,5 @@
 import { LLMProvider } from '@/llm/llmProvider';
-import type { ILLMModelConfiguration, ILLMProviderConfiguration } from '@/llm/types';
+import type { ILLMModelConfiguration, ILLMProviderConfiguration } from '@/settings/settingsTypes';
 
 export interface IOllamaTagsResponse {
   readonly models: Array<{

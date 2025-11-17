@@ -1,4 +1,4 @@
-import type { ILLMModelConfiguration, ILLMProviderConfiguration } from '@/llm/types';
+import type { ILLMModelConfiguration, ILLMProviderConfiguration } from '@/settings/settingsTypes';
 import { HttpClient } from '@/utils/httpClient';
 
 export abstract class LLMProvider {

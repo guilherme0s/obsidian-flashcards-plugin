@@ -1,6 +1,7 @@
 import type { LLMProvider } from '@/llm/llmProvider';
 import { OllamaLLMProvider } from '@/llm/ollamaProvider';
-import { type ILLMProviderConfiguration, LLMProviderType } from '@/llm/types';
+import { LLMProviderType } from '@/llm/types';
+import type { ILLMProviderConfiguration } from '@/settings/settingsTypes';
 
 export function createLLMProvider(configuration: ILLMProviderConfiguration): LLMProvider {
   switch (configuration.provider) {
