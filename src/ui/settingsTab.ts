@@ -59,17 +59,18 @@ export class MyPluginSettingTab extends PluginSettingTab {
       .addDropdown((dropdown) => {
         const currentModel = settings.llm.model?.name;
 
-        dropdown.addOption('none', 'None');
         for (const m of this.availableModels) {
           dropdown.addOption(m.name, m.name);
         }
+        dropdown.addOption('none', 'None');
 
         dropdown.setValue(currentModel ?? 'none');
         dropdown.onChange(async (value) => {
+          const newValue = value === 'none' ? undefined : value;
           await this.settingsService.update({
             llm: {
               model: {
-                name: value,
+                name: newValue,
               },
             },
           });
