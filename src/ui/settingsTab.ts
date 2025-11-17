@@ -82,14 +82,40 @@ export class MyPluginSettingTab extends PluginSettingTab {
     const settings = this.settingsService.getSettings();
 
     const provider = createLLMProvider(settings.llm);
-    const models = await provider.getAvailableModels();
 
-    if (models.length === 0) {
-      new Notice('No models found');
-      return;
+    try {
+      const models = await provider.getAvailableModels();
+
+      if (models.length === 0) {
+        new Notice('No models found');
+        this.availableModels = [];
+        await this.settingsService.update({
+          llm: {
+            model: undefined,
+          },
+        });
+        this.display();
+        return;
+      }
+
+      this.availableModels = models;
+      const firstModel = models[0];
+      await this.settingsService.update({
+        llm: {
+          model: { name: firstModel.name },
+        },
+      });
+      new Notice('Models reloaded');
+      this.display();
+    } catch {
+      new Notice('Failed to reload models.');
+      this.availableModels = [];
+      await this.settingsService.update({
+        llm: {
+          model: undefined,
+        },
+      });
+      this.display();
     }
-
-    this.availableModels = models;
-    this.display();
   }
 }
