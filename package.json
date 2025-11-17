@@ -1,0 +1,20 @@
+{
+  "name": "obsidian-plugin",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "build": "tsup --minify",
+    "dev": "tsup --watch",
+    "lint": "biome check"
+  },
+  "dependencies": {
+    "obsidian": "^1.10.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.3.6",
+    "builtin-modules": "^5.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "pnpm@10.20.0"
+}
