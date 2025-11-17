@@ -1,4 +1,5 @@
 import type { Plugin } from 'obsidian';
+import type { DeepPartial } from '@/commonTypes';
 import { LLMProviderType } from '@/llm/types';
 import type { IPluginSettings } from '@/settings/settingsTypes';
 
@@ -27,7 +28,7 @@ export class SettingsService {
     await this.plugin.saveData(this.settings);
   }
 
-  public async update(newSettings: Partial<IPluginSettings>): Promise<void> {
+  public async update(newSettings: DeepPartial<IPluginSettings>): Promise<void> {
     this.settings = this.deepMerge(this.settings, newSettings);
     await this.save();
   }
