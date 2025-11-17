@@ -1,17 +1,15 @@
 import { type App, Notice, type Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { createLLMProvider, LLMProviderType } from '@/llm/llmFactory';
 import type { SettingsService } from '@/settings/settingsService';
-import type { ILLMModelConfiguration } from '@/settings/settingsTypes';
 
 export class MyPluginSettingTab extends PluginSettingTab {
-  private availableModels: ILLMModelConfiguration[] = [];
-
   public constructor(
     app: App,
     plugin: Plugin,
     private readonly settingsService: SettingsService,
   ) {
     super(app, plugin);
+    void this.fetchLLMProviderModels(false);
   }
 
   public override display(): void {
@@ -54,12 +52,19 @@ export class MyPluginSettingTab extends PluginSettingTab {
         button
           .setIcon('refresh-ccw')
           .setTooltip('Reload models')
-          .onClick(() => this.fetchLLMProviderModels());
+          .onClick(() => this.fetchLLMProviderModels(true));
       })
       .addDropdown((dropdown) => {
         const currentModel = settings.llm.model?.name;
+        const availableModels = settings.llm.availableModels ?? [];
+        const modelList = [...availableModels];
 
-        for (const m of this.availableModels) {
+        const currentModelInList = modelList.find((m) => m.name === currentModel);
+        if (currentModel && !currentModelInList) {
+          modelList.unshift({ name: currentModel });
+        }
+
+        for (const m of modelList) {
           dropdown.addOption(m.name, m.name);
         }
         dropdown.addOption('none', 'None');
@@ -78,7 +83,7 @@ export class MyPluginSettingTab extends PluginSettingTab {
       });
   }
 
-  private async fetchLLMProviderModels(): Promise<void> {
+  private async fetchLLMProviderModels(notify: boolean): Promise<void> {
     const settings = this.settingsService.getSettings();
 
     const provider = createLLMProvider(settings.llm);
@@ -86,36 +91,46 @@ export class MyPluginSettingTab extends PluginSettingTab {
     try {
       const models = await provider.getAvailableModels();
 
-      if (models.length === 0) {
-        new Notice('No models found');
-        this.availableModels = [];
-        await this.settingsService.update({
-          llm: {
-            model: undefined,
-          },
-        });
-        this.display();
+      if (!models || models.length === 0) {
+        if (notify) {
+          new Notice('No models found');
+        }
+        await this.resetModelsState();
         return;
       }
 
-      this.availableModels = models;
-      const firstModel = models[0];
+      const currentModel = settings.llm.model;
+      const currentModelStillExists = models.find((m) => m.name === currentModel?.name);
+
+      const newModel = currentModelStillExists ? currentModel : models[0];
+
       await this.settingsService.update({
         llm: {
-          model: { name: firstModel.name },
+          model: {
+            name: newModel?.name,
+          },
+          availableModels: models,
         },
       });
-      new Notice('Models reloaded');
+      if (notify) {
+        new Notice('Models reloaded');
+      }
       this.display();
     } catch {
-      new Notice('Failed to reload models.');
-      this.availableModels = [];
-      await this.settingsService.update({
-        llm: {
-          model: undefined,
-        },
-      });
-      this.display();
+      if (notify) {
+        new Notice('Failed to reload models.');
+      }
+      await this.resetModelsState();
     }
+  }
+
+  private async resetModelsState() {
+    await this.settingsService.update({
+      llm: {
+        model: undefined,
+        availableModels: [],
+      },
+    });
+    this.display();
   }
 }

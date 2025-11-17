@@ -16,4 +16,5 @@ export interface ILLMProviderConfiguration {
   readonly provider: LLMProviderType;
   readonly auth: ILLMAuthenticationConfiguration;
   readonly model?: ILLMModelConfiguration;
+  readonly availableModels?: readonly ILLMModelConfiguration[];
 }
