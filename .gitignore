@@ -2,3 +2,4 @@ node_modules/
 .idea/
 .vscode/
 main.js
+data.json
