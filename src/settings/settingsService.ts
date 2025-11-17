@@ -21,7 +21,7 @@ export class SettingsService {
 
   public async load(): Promise<void> {
     const raw = await this.plugin.loadData();
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, raw);
+    this.settings = this.deepMerge(DEFAULT_SETTINGS, raw ?? {});
   }
 
   public async save(): Promise<void> {
