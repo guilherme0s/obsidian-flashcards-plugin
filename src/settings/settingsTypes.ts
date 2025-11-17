@@ -1,4 +1,4 @@
-import type { LLMProviderType } from '@/llm/types';
+import type { LLMProviderType } from '@/llm/llmFactory';
 
 export interface IPluginSettings {
   readonly llm: ILLMProviderConfiguration;

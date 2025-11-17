@@ -1,6 +1,5 @@
 import { type App, Notice, type Plugin, PluginSettingTab, Setting } from 'obsidian';
-import { createLLMProvider } from '@/llm/llmFactory';
-import { LLMProviderType } from '@/llm/types';
+import { createLLMProvider, LLMProviderType } from '@/llm/llmFactory';
 import type { SettingsService } from '@/settings/settingsService';
 import type { ILLMModelConfiguration } from '@/settings/settingsTypes';
 

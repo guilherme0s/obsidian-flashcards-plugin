@@ -1,6 +1,6 @@
 import type { Plugin } from 'obsidian';
 import type { DeepPartial } from '@/commonTypes';
-import { LLMProviderType } from '@/llm/types';
+import { LLMProviderType } from '@/llm/llmFactory';
 import type { IPluginSettings } from '@/settings/settingsTypes';
 
 export const DEFAULT_SETTINGS: IPluginSettings = {
