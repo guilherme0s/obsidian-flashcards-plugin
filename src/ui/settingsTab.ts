@@ -10,6 +10,16 @@ import { createLLMProvider, LLMProviderType } from '@/llm/llmFactory';
 import type { SettingsService } from '@/settings/settingsService';
 import type { ILLMModelConfiguration } from '@/settings/settingsTypes';
 
+const resolveModelName = (
+  current: string | undefined,
+  models: readonly ILLMModelConfiguration[],
+): string => {
+  if (current && models.some((m) => m.name === current)) {
+    return current;
+  }
+  return models[0]?.name ?? '';
+};
+
 export class MyPluginSettingTab extends PluginSettingTab {
   public constructor(
     app: App,
@@ -17,7 +27,7 @@ export class MyPluginSettingTab extends PluginSettingTab {
     private readonly settingsService: SettingsService,
   ) {
     super(app, plugin);
-    void this.reloadModels(false);
+    void this.loadModels(false);
   }
 
   public override display(): void {
@@ -60,33 +70,30 @@ export class MyPluginSettingTab extends PluginSettingTab {
         button
           .setIcon('refresh-ccw')
           .setTooltip('Reload models')
-          .onClick(() => this.reloadModels(true));
+          .onClick(() => this.loadModels(true));
       })
       .addDropdown((dropdown) => this.populateModelDropdown(dropdown));
   }
 
   private populateModelDropdown(dropdown: DropdownComponent): void {
     const settings = this.settingsService.getSettings();
-    const currentModel = settings.llm.model?.name;
+
     const availableModels = settings.llm.availableModels ?? [];
+    const currentModelName = settings.llm.model?.name;
 
     if (availableModels.length === 0) {
-      dropdown.addOption('', 'No models available');
+      dropdown.addOption('', 'None');
       dropdown.setValue('');
       return;
     }
 
-    availableModels.forEach((model) => {
+    for (const model of availableModels) {
       dropdown.addOption(model.name, model.name);
-    });
+    }
 
-    const valueToSet =
-      currentModel && availableModels.some((m) => m.name === currentModel)
-        ? currentModel
-        : (availableModels[0]?.name ?? '');
+    const valueToSet = resolveModelName(currentModelName, availableModels);
 
     dropdown.setValue(valueToSet);
-
     dropdown.onChange(async (value: string) => {
       await this.settingsService.update({
         llm: {
@@ -98,44 +105,40 @@ export class MyPluginSettingTab extends PluginSettingTab {
     });
   }
 
-  private async reloadModels(notify: boolean): Promise<void> {
+  private async loadModels(notify: boolean): Promise<void> {
     try {
-      const models = await this.fetchModelsFromProvider();
-
-      if (!models || models.length === 0) {
-        if (notify) {
-          new Notice('No models found. Please check your endpoint URL.');
-        }
-        await this.clearModelSettings();
-        return;
-      }
+      const settings = this.settingsService.getSettings();
+      const provider = createLLMProvider(settings.llm);
+      const models = await provider.getAvailableModels();
 
       await this.updateModelSettings(models);
 
       if (notify) {
         new Notice('Models reloaded');
       }
-      this.display();
     } catch (error) {
       console.error('Failed to load models:', error);
       if (notify) {
-        new Notice('Failed to reload models.');
+        new Notice('Failed to load models. Check your endpoint URL.');
       }
-      await this.clearModelSettings();
+      await this.settingsService.update({
+        llm: {
+          model: {
+            name: undefined,
+          },
+          availableModels: [],
+        },
+      });
+    } finally {
+      this.display();
     }
-  }
-
-  private async fetchModelsFromProvider(): Promise<ILLMModelConfiguration[]> {
-    const settings = this.settingsService.getSettings();
-    const provider = createLLMProvider(settings.llm);
-    return await provider.getAvailableModels();
   }
 
   private async updateModelSettings(models: ILLMModelConfiguration[]): Promise<void> {
     const settings = this.settingsService.getSettings();
-    const currentModel = settings.llm.model;
+    const currentModelName = settings.llm.model?.name;
 
-    const selectedModel = models.find((m) => m.name === currentModel?.name) ?? models[0];
+    const selectedModel = models.find((m) => m.name === currentModelName) ?? models[0];
 
     await this.settingsService.update({
       llm: {
@@ -145,17 +148,5 @@ export class MyPluginSettingTab extends PluginSettingTab {
         availableModels: models,
       },
     });
-
-    this.display();
-  }
-
-  private async clearModelSettings() {
-    await this.settingsService.update({
-      llm: {
-        model: undefined,
-        availableModels: [],
-      },
-    });
-    this.display();
   }
 }
